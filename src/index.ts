@@ -1,12 +1,5 @@
 import { makeCompressionStream, makeDecompressionStream } from "./ponyfill.js";
 
-import type { CompressionStreamConstructor, DecompressionStreamConstructor } from "./types.js";
-
-declare global {
-  var CompressionStream: CompressionStreamConstructor;
-  var DecompressionStream: DecompressionStreamConstructor;
-}
-
 const CompressionStream = makeCompressionStream(TransformStream);
 const DecompressionStream = makeDecompressionStream(TransformStream);
 
