@@ -38,7 +38,6 @@ function makeMulti(TransformStreamBase: typeof TransformStream, processors: Reco
       }
 
       let compressor = new Processor();
-      let cb: () => void;
 
       super({
         start(controller) {
@@ -49,27 +48,20 @@ function makeMulti(TransformStreamBase: typeof TransformStream, processors: Reco
               controller.enqueue(data);
               if (final) controller.terminate();
             }
-            cb();
           }
         },
-        async transform(chunk) {
-          return new Promise(resolve => {
-            cb = resolve;
-            if (chunk instanceof ArrayBuffer){
-              chunk = new Uint8Array(chunk);
-            } else if (ArrayBuffer.isView(chunk)){
-              chunk = new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
-            } else {
-              throw new TypeError("The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
-            }
-            compressor.push(chunk as Uint8Array);
-          });
+        transform(chunk) {
+          if (chunk instanceof ArrayBuffer){
+            chunk = new Uint8Array(chunk);
+          } else if (ArrayBuffer.isView(chunk)){
+            chunk = new Uint8Array(chunk.buffer,chunk.byteOffset,chunk.byteLength);
+          } else {
+            throw new TypeError("The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
+          }
+          compressor.push(chunk as Uint8Array);
         },
         flush() {
-          return new Promise(resolve => {
-            cb = resolve;
-            compressor.push(new Uint8Array(0), true);
-          })
+          compressor.push(new Uint8Array(0),true);
         }
       },
       {

@@ -1,25 +1,23 @@
 import { makeCompressionStream, makeDecompressionStream } from "./ponyfill.js";
 
-type Global = typeof globalThis & {
-  CompressionStream?: unknown;
-  DecompressionStream?: unknown;
+import type { CompressionStreamConstructor, DecompressionStreamConstructor } from "./types.js";
+
+declare global {
+  var CompressionStream: CompressionStreamConstructor;
+  var DecompressionStream: DecompressionStreamConstructor;
 }
 
-declare var global: Global;
+const CompressionStream = makeCompressionStream(TransformStream);
+const DecompressionStream = makeDecompressionStream(TransformStream);
 
-const globals: Global =
-  typeof globalThis == "undefined"
-    ? typeof self == "undefined"
-      ? typeof global == "undefined"
-        ? {} as Global
-      : global
-    : self
-  : globalThis;
-
-if (typeof globals.CompressionStream == "undefined") {
-  globals.CompressionStream = makeCompressionStream(TransformStream);
+try {
+  new CompressionStream("deflate-raw");
+} catch {
+  globalThis.CompressionStream = CompressionStream;
 }
 
-if (typeof globals.DecompressionStream == "undefined") {
-  globals.DecompressionStream = makeDecompressionStream(TransformStream);
+try {
+  new DecompressionStream("deflate-raw");
+} catch {
+  globalThis.DecompressionStream = DecompressionStream;
 }
