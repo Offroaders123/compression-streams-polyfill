@@ -1,7 +1,4 @@
-*
-!esm/**
-!lib/**
-!umd/**
-!ponyfill/**
-!package.json
-!README.md
+/src
+/test
+tsconfig.json
+tsconfig.build.json

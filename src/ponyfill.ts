@@ -1,8 +1,4 @@
-export type { CompressionFormat, CompressionStream, CompressionStreamConstructor, DecompressionStream, DecompressionStreamConstructor } from "./types.js";
-
 import { AsyncDeflate, AsyncGzip, AsyncZlib, AsyncInflate, AsyncGunzip, AsyncUnzlib, AsyncFlateStreamHandler } from "fflate";
-
-import type { CompressionFormat, CompressionStreamConstructor, DecompressionStreamConstructor } from "./types.js";
 
 const COMPRESSORS = {
   "gzip": AsyncGzip,
