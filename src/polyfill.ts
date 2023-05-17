@@ -1,5 +1,13 @@
 import { AsyncDeflate, AsyncGzip, AsyncZlib, AsyncInflate, AsyncGunzip, AsyncUnzlib, AsyncFlateStreamHandler } from "fflate";
 
+export function makeCompressionStream(TransformStreamBase: typeof TransformStream): CompressionStreamConstructor {
+  return class CompressionStream extends makeMulti(TransformStreamBase,COMPRESSORS,"CompressionStream") {}
+}
+
+export function makeDecompressionStream(TransformStreamBase: typeof TransformStream): DecompressionStreamConstructor {
+  return class DeompressionStream extends makeMulti(TransformStreamBase,DECOMPRESSORS,"DecompressionStream") {}
+}
+
 const COMPRESSORS = {
   "gzip": AsyncGzip,
   "deflate": AsyncZlib,
@@ -34,6 +42,7 @@ function makeMulti(TransformStreamBase: typeof TransformStream, processors: Reco
       }
 
       let compressor = new Processor();
+      let callback: () => void;
 
       super({
         start(controller) {
@@ -44,9 +53,10 @@ function makeMulti(TransformStreamBase: typeof TransformStream, processors: Reco
               controller.enqueue(data);
               if (final) controller.terminate();
             }
+            callback();
           }
         },
-        transform(chunk) {
+        async transform(chunk) {
           if (chunk instanceof ArrayBuffer){
             chunk = new Uint8Array(chunk);
           } else if (ArrayBuffer.isView(chunk)){
@@ -55,9 +65,11 @@ function makeMulti(TransformStreamBase: typeof TransformStream, processors: Reco
             throw new TypeError("The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
           }
           compressor.push(chunk as Uint8Array);
+          await new Promise<void>(resolve => callback = resolve);
         },
-        flush() {
+        async flush() {
           compressor.push(new Uint8Array(0),true);
+          await new Promise<void>(resolve => callback = resolve);
         }
       },
       {
@@ -70,12 +82,4 @@ function makeMulti(TransformStreamBase: typeof TransformStream, processors: Reco
   }
 
   return BaseCompressionStream;
-}
-
-export function makeCompressionStream(TransformStreamBase: typeof TransformStream): CompressionStreamConstructor {
-  return class CompressionStream extends makeMulti(TransformStreamBase,COMPRESSORS,"CompressionStream") {}
-}
-
-export function makeDecompressionStream(TransformStreamBase: typeof TransformStream): DecompressionStreamConstructor {
-  return class DeompressionStream extends makeMulti(TransformStreamBase,DECOMPRESSORS,"DecompressionStream") {}
 }
